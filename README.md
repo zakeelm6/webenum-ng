@@ -98,3 +98,7 @@ Dans `webenum-<host>-<timestamp>/` :
 A n'utiliser que sur des cibles que tu es **autorise** a tester (labs, CTF,
 missions). La phase `--active` envoie des payloads offensifs : redouble de
 prudence sur le scope.
+
+## Auteur
+
+Zakariya Elmansouri ([@zakeelm6](https://github.com/zakeelm6))

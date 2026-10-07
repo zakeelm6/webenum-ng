@@ -29,6 +29,13 @@ Via pip (fournit la commande `webenum-ng`) :
 pip install webenum-ng
 ```
 
+Via Docker (image Kali avec les scanners deja installes) :
+
+```bash
+docker pull ghcr.io/zakeelm6/webenum-ng:latest
+docker run --rm -v "$PWD:/scan" ghcr.io/zakeelm6/webenum-ng http://cible
+```
+
 Ou depuis les sources :
 
 ```bash

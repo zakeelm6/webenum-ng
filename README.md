@@ -103,4 +103,4 @@ prudence sur le scope.
 
 Zakariya Elmansouri
 - GitHub : [@zakeelm6](https://github.com/zakeelm6)
-- LinkedIn : [zakariya-el-mansouri](https://www.linkedin.com/in/zakariya-el-mansouri)
+- LinkedIn : [Zakariya Elmansouri](https://www.linkedin.com/in/zakariya-elmansouri-112b2932a/)

@@ -2,5 +2,4 @@
 dist
 build
 *.egg-info
-webenum-*/
 __pycache__

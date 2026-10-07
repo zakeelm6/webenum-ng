@@ -1,0 +1,4 @@
+# sorties de scan
+webenum-*/
+*.pyc
+__pycache__/

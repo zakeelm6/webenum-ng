@@ -23,6 +23,14 @@ vue d'ensemble plus un plan d'action.
 
 ## Installation
 
+Via pip (fournit la commande `webenum-ng`) :
+
+```bash
+pip install webenum-ng
+```
+
+Ou depuis les sources :
+
 ```bash
 git clone https://github.com/zakeelm6/webenum-ng.git
 cd webenum-ng

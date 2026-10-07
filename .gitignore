@@ -2,3 +2,8 @@
 webenum-*/
 *.pyc
 __pycache__/
+
+# build python
+dist/
+build/
+*.egg-info/

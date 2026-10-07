@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "webenum-ng"
+version = "1.0.0"
+description = "Orchestrateur de reconnaissance web tout-en-un (l'equivalent web de enum4linux-ng)"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Zakariya Elmansouri", email = "zakariyaelmansouri40@gmail.com" }]
+keywords = ["pentesting", "reconnaissance", "security-tools", "nuclei", "web-security"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Information Technology",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/zakeelm6/webenum-ng"
+Repository = "https://github.com/zakeelm6/webenum-ng"
+Issues = "https://github.com/zakeelm6/webenum-ng/issues"
+
+[project.scripts]
+webenum-ng = "webenum_ng:main"
+
+[tool.setuptools]
+py-modules = ["webenum_ng"]

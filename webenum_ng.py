@@ -25,6 +25,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import time
@@ -219,6 +220,8 @@ def build_registry() -> list[Tool]:
         ),
         Tool(
             "nuclei", "nuclei", "vuln",
+            applies=lambda ctx: nuclei_templates_present(),
+            timeout=900,
             build=lambda ctx: ["nuclei", "-u", ctx["url"], "-nc", "-silent",
                                "-duc", "-ni", "-timeout", "10", "-retries", "1",
                                "-severity",
@@ -312,6 +315,24 @@ def is_pd_httpx() -> bool:
             except Exception:  # noqa: BLE001
                 _PD_HTTPX = False
     return _PD_HTTPX
+
+
+_NUCLEI_TPL: bool | None = None
+
+
+def nuclei_templates_present() -> bool:
+    """True si des templates nuclei sont installes (sinon nuclei bloque au 1er run)."""
+    global _NUCLEI_TPL
+    if _NUCLEI_TPL is None:
+        home = Path.home()
+        cands = [home / "nuclei-templates", home / ".local/nuclei-templates",
+                 home / ".config/nuclei/nuclei-templates"]
+        env = os.environ.get("NUCLEI_TEMPLATES")
+        if env:
+            cands.insert(0, Path(env))
+        _NUCLEI_TPL = any(
+            d.is_dir() and any(d.rglob("*.yaml")) for d in cands)
+    return _NUCLEI_TPL
 
 
 def detect_cms(fingerprint_text: str) -> str:
@@ -423,6 +444,12 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true", help="affiche les commandes sans executer")
     args = ap.parse_args()
 
+    # SIGTERM (ex: `timeout`, kill) -> meme traitement que Ctrl+C : rapport partiel
+    try:
+        signal.signal(signal.SIGTERM, lambda *_: (_ for _ in ()).throw(KeyboardInterrupt()))
+    except (ValueError, OSError):
+        pass
+
     tgt = Target(args.target)
     tgt.normalize()
 
@@ -525,6 +552,9 @@ def main() -> int:
         ctx["nuclei_tags"] = detect_products(fp_text)
     if ctx["nuclei_tags"] and not ctx["all_templates"]:
         ok(f"templates nuclei cibles : {C.BOLD}{ctx['nuclei_tags']}{C.X}")
+    if shutil.which("nuclei") and not nuclei_templates_present() and not args.dry_run:
+        warn("nuclei saute : templates absents. Installe-les une fois avec "
+             f"{C.BOLD}nuclei -update-templates{C.X} (sinon nuclei bloquerait au 1er run)")
 
     # ---- PHASES 2-4 : content / vuln / cms en parallele ----
     parallel = [t for t in registry if t.category in ("content", "vuln", "cms", "active")]
@@ -541,9 +571,12 @@ def main() -> int:
         todo.append(tool)
 
     if todo and not args.dry_run:
-        log(f"{C.BOLD}phases 2-4 : {len(todo)} scans en parallele (j={args.jobs}){C.X}")
-        with cf.ThreadPoolExecutor(max_workers=args.jobs) as ex:
-            futs = {ex.submit(run_tool, t, ctx): t for t in todo}
+        noms = ", ".join(t.name for t in todo)
+        log(f"{C.BOLD}phases 2-4 : {len(todo)} scans en parallele (j={args.jobs}){C.X} "
+            f"{C.GR}[{noms}]{C.X}")
+        ex = cf.ThreadPoolExecutor(max_workers=args.jobs)
+        futs = {ex.submit(run_tool, t, ctx): t for t in todo}
+        try:
             for fut in cf.as_completed(futs):
                 t = futs[fut]
                 r = fut.result()
@@ -552,6 +585,16 @@ def main() -> int:
                 tag = C.G if r.rc == 0 else C.Y
                 print(f"  {tag}done{C.X} {t.name} "
                       f"({r.seconds}s, {len(r.highlights)} highlights)")
+            ex.shutdown(wait=True)
+        except KeyboardInterrupt:
+            # interruption (Ctrl+C ou SIGTERM) : on genere quand meme le rapport
+            # avec ce qui est deja remonte, au lieu de tout perdre.
+            done_names = {r.tool for r in results}
+            for t in todo:
+                if t.name not in done_names:
+                    results.append(Result(t.name, t.category, [], skipped="interrompu"))
+            warn("interruption : generation du rapport avec les resultats partiels...")
+            ex.shutdown(wait=False, cancel_futures=True)
 
     if args.dry_run:
         ok("dry-run termine, rien n'a ete execute")

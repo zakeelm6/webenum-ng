@@ -8,6 +8,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+# templates nuclei pre-telecharges : sinon nuclei bloque au 1er run dans le conteneur
+RUN nuclei -update-templates -duc || true
+
 WORKDIR /opt/webenum-ng
 COPY pyproject.toml README.md LICENSE webenum_ng.py webenum-ng.py ./
 RUN pip install --no-cache-dir --break-system-packages .
